@@ -41,7 +41,7 @@ jobs:
         python generate_report.py
         
     - name: Upload model report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: model-report
         path: model_report.md
