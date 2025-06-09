@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import re
 from urllib.parse import urlparse, parse_qs
+import json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,12 +20,42 @@ def get_direct_download_url(yandex_url):
             response = requests.get(yandex_url)
             response.raise_for_status()
             
-            # Find the download button URL in the page
-            download_url_match = re.search(r'href="(https://getfile\.dokpub\.com/yandex/get/[^"]+)"', response.text)
+            # Try to find the download URL in the page
+            # First, try to find the data-react-props attribute
+            react_props_match = re.search(r'data-react-props="([^"]+)"', response.text)
+            if react_props_match:
+                try:
+                    # Decode HTML entities and parse JSON
+                    import html
+                    props_json = html.unescape(react_props_match.group(1))
+                    props = json.loads(props_json)
+                    
+                    # Try to find download URL in different possible locations
+                    if 'downloadUrl' in props:
+                        return props['downloadUrl']
+                    elif 'publicUrl' in props:
+                        return props['publicUrl']
+                    elif 'resource' in props and 'downloadUrl' in props['resource']:
+                        return props['resource']['downloadUrl']
+                except json.JSONDecodeError:
+                    logger.warning("Failed to parse JSON from data-react-props")
+            
+            # If we couldn't find the URL in data-react-props, try other methods
+            # Look for the download button URL
+            download_url_match = re.search(r'href="(https://[^"]+download[^"]+)"', response.text)
             if download_url_match:
                 return download_url_match.group(1)
-            else:
-                raise ValueError("Could not find download URL in Yandex.Disk page")
+            
+            # Look for any URL containing 'download'
+            download_url_match = re.search(r'https://[^"\']+download[^"\']+', response.text)
+            if download_url_match:
+                return download_url_match.group(0)
+            
+            # If we still haven't found the URL, try to get it from the page source
+            logger.info("Trying to find download URL in page source...")
+            logger.debug(f"Page content: {response.text[:1000]}...")  # Log first 1000 chars for debugging
+            
+            raise ValueError("Could not find download URL in Yandex.Disk page")
         else:
             # If it's already a direct download URL
             return yandex_url
@@ -47,6 +78,8 @@ def download_model():
         model_url = os.getenv('MODEL_URL')
         if not model_url:
             raise ValueError("MODEL_URL environment variable is not set")
+        
+        logger.info(f"Original URL: {model_url}")
         
         # Get direct download URL if it's a Yandex.Disk link
         download_url = get_direct_download_url(model_url)
