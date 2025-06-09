@@ -33,14 +33,15 @@ jobs:
       run: |
         python -m pytest tests/
         
-    - name: Generate model report
-      run: python generate_report.py
-      
-    - name: Upload model report
-      uses: actions/upload-artifact@v4
-      with:
-        name: model_report
-        path: model_report.md
+    # Temporarily disabled report generation
+    # - name: Generate model report
+    #   run: python generate_report.py
+    #   
+    # - name: Upload model report
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: model_report
+    #     path: model_report.md
         
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
