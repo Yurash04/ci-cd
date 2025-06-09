@@ -1,4 +1,4 @@
-scikit-learn
+scikit-learn==1.4.1
 streamlit
 uvicorn
 requests
@@ -7,3 +7,6 @@ fastapi
 uvicorn
 python-multipart
 webcolors
+pandas==2.2.1
+numpy==1.26.4
+gdown==4.7.3

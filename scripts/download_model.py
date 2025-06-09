@@ -1,11 +1,11 @@
 import os
-import requests
-from pathlib import Path
 import logging
+from pathlib import Path
+import requests
 import re
-from urllib.parse import urlparse, parse_qs
-import json
+import gdown
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -38,64 +38,6 @@ def get_google_drive_file_id(url):
     logger.info("URL is not in Google Drive format")
     return None
 
-def download_from_google_drive(file_id, destination):
-    """Download a file from Google Drive."""
-    def get_confirm_token(response):
-        for key, value in response.cookies.items():
-            if key.startswith('download_warning_'):
-                return value
-        return None
-
-    def save_response_content(response, destination):
-        CHUNK_SIZE = 32768
-        total_size = 0
-        
-        with open(destination, 'wb') as f:
-            for chunk in response.iter_content(CHUNK_SIZE):
-                if chunk:
-                    f.write(chunk)
-                    total_size += len(chunk)
-                    if total_size % (10 * 1024 * 1024) < CHUNK_SIZE:
-                        logger.info(f"Downloaded {total_size} bytes")
-        
-        return total_size
-
-    try:
-        # First request to get the confirmation token
-        url = f"https://drive.google.com/uc?id={file_id}&export=download"
-        logger.info(f"Making initial request to: {url}")
-        
-        session = requests.Session()
-        response = session.get(url, stream=True)
-        response.raise_for_status()
-        
-        # Log response headers for debugging
-        logger.info("Initial response headers:")
-        for key, value in response.headers.items():
-            logger.info(f"  {key}: {value}")
-        
-        # Check if we need confirmation
-        token = get_confirm_token(response)
-        if token:
-            logger.info("Download requires confirmation, proceeding with token")
-            url = f"https://drive.google.com/uc?export=download&confirm={token}&id={file_id}"
-            response = session.get(url, stream=True)
-            response.raise_for_status()
-            
-            # Log confirmation response headers
-            logger.info("Confirmation response headers:")
-            for key, value in response.headers.items():
-                logger.info(f"  {key}: {value}")
-        
-        # Save the file
-        total_size = save_response_content(response, destination)
-        logger.info(f"Download completed, total size: {total_size} bytes")
-        return total_size
-        
-    except Exception as e:
-        logger.error(f"Error downloading from Google Drive: {str(e)}")
-        raise
-
 def download_model():
     """
     Download model from URL specified in MODEL_URL environment variable.
@@ -118,7 +60,18 @@ def download_model():
         file_id = get_google_drive_file_id(model_url)
         if file_id:
             logger.info(f"Detected Google Drive URL, file ID: {file_id}")
-            total_size = download_from_google_drive(file_id, local_path)
+            # Use gdown to download the file
+            url = f"https://drive.google.com/uc?id={file_id}"
+            logger.info(f"Downloading from: {url}")
+            gdown.download(url, str(local_path), quiet=False)
+            
+            # Verify file size
+            actual_size = local_path.stat().st_size
+            expected_size = 147_990_000  # примерный размер в байтах
+            if actual_size < expected_size:
+                raise ValueError(f"Downloaded file size {actual_size} is less than expected {expected_size}")
+            
+            logger.info(f"Model downloaded successfully to {local_path}")
         else:
             # Direct download
             logger.info(f"Using direct download URL: {model_url[:50]}...")
@@ -142,14 +95,14 @@ def download_model():
                         if downloaded_size % (10 * 1024 * 1024) < 8192:
                             logger.info(f"Downloaded {downloaded_size}/{total_size} bytes")
                 total_size = downloaded_size
-        
-        # Verify file size
-        actual_size = local_path.stat().st_size
-        expected_size = 147_990_000  # примерный размер в байтах
-        if actual_size < expected_size:
-            raise ValueError(f"Downloaded file size {actual_size} is less than expected {expected_size}")
-                
-        logger.info(f"Model downloaded successfully to {local_path}")
+            
+            # Verify file size
+            actual_size = local_path.stat().st_size
+            expected_size = 147_990_000  # примерный размер в байтах
+            if actual_size < expected_size:
+                raise ValueError(f"Downloaded file size {actual_size} is less than expected {expected_size}")
+            
+            logger.info(f"Model downloaded successfully to {local_path}")
         
     except Exception as e:
         logger.error(f"Error downloading model: {str(e)}")
