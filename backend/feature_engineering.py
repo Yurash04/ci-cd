@@ -36,6 +36,9 @@ def create_features(data):
     features['condition'] = df['condition']
     features['odometer'] = df['odometer']
     
+    # Create make_model feature
+    features['make_model'] = df['make'] + '_' + df['model']
+    
     # Categorical features
     categorical_cols = ['make', 'model', 'trim', 'body', 'transmission', 'state', 'color', 'interior']
     for col in categorical_cols:

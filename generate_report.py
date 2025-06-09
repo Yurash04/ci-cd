@@ -32,6 +32,10 @@ def generate_model_report():
         logger.info("Pipeline steps:")
         for name, step in pipeline.named_steps.items():
             logger.info(f"- {name}: {type(step).__name__}")
+            if hasattr(step, 'named_steps'):
+                logger.info("  Sub-steps:")
+                for sub_name, sub_step in step.named_steps.items():
+                    logger.info(f"  - {sub_name}: {type(sub_step).__name__}")
         
         # Generate sample data for testing
         sample_data = {
@@ -55,6 +59,7 @@ def generate_model_report():
         features = create_features(sample_data)
         logger.info("Features created successfully")
         logger.info(f"Feature columns: {features.columns.tolist()}")
+        logger.info(f"Feature dtypes:\n{features.dtypes}")
         
         # Make prediction
         prediction = pipeline.predict(features)
