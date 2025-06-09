@@ -15,6 +15,7 @@ def get_google_drive_file_id(url):
     
     # Remove any masking characters (like ***) from the URL
     clean_url = url.replace('*', '')
+    logger.info(f"Cleaned URL: {clean_url[:50]}...")
     
     # If URL starts with id=, extract the ID directly
     if clean_url.startswith('id='):
