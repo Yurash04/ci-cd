@@ -4,6 +4,12 @@ from sklearn.metrics import mean_squared_error, r2_score
 import joblib
 import logging
 from pathlib import Path
+import sys
+import os
+
+# Add the project root directory to Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from backend.feature_engineering import create_features  # Импортируем функцию из правильного модуля
 
 logging.basicConfig(level=logging.INFO)
