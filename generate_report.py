@@ -28,6 +28,11 @@ def generate_model_report():
         pipeline = joblib.load(model_path)
         logger.info("Model pipeline loaded successfully")
         
+        # Log pipeline steps
+        logger.info("Pipeline steps:")
+        for name, step in pipeline.named_steps.items():
+            logger.info(f"- {name}: {type(step).__name__}")
+        
         # Generate sample data for testing
         sample_data = {
             'year': 2015,
@@ -49,6 +54,7 @@ def generate_model_report():
         # Create features
         features = create_features(sample_data)
         logger.info("Features created successfully")
+        logger.info(f"Feature columns: {features.columns.tolist()}")
         
         # Make prediction
         prediction = pipeline.predict(features)

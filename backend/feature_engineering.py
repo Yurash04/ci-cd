@@ -18,24 +18,27 @@ def create_features(data):
     else:
         df = data.copy()
     
-    # Convert saledate to datetime
-    df['saledate'] = pd.to_datetime(df['saledate'])
+    # Ensure all required columns are present
+    required_columns = [
+        'year', 'make', 'model', 'trim', 'body', 'transmission',
+        'state', 'condition', 'odometer', 'color', 'interior'
+    ]
     
-    # Extract date features
-    df['sale_year'] = df['saledate'].dt.year
-    df['sale_month'] = df['saledate'].dt.month
-    df['sale_day'] = df['saledate'].dt.day
-    df['sale_dayofweek'] = df['saledate'].dt.dayofweek
+    for col in required_columns:
+        if col not in df.columns:
+            raise ValueError(f"Required column '{col}' is missing")
     
-    # Calculate car age
-    df['car_age'] = df['sale_year'] - df['year']
+    # Create features
+    features = pd.DataFrame()
     
-    # Create categorical features
+    # Numerical features
+    features['year'] = df['year']
+    features['condition'] = df['condition']
+    features['odometer'] = df['odometer']
+    
+    # Categorical features
     categorical_cols = ['make', 'model', 'trim', 'body', 'transmission', 'state', 'color', 'interior']
     for col in categorical_cols:
-        df[col] = df[col].astype('category')
+        features[col] = df[col].astype('category')
     
-    # Drop original date column and other non-feature columns
-    df = df.drop(['saledate', 'vin', 'seller'], axis=1)
-    
-    return df 
+    return features 
