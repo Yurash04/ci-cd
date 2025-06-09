@@ -1,0 +1,101 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install boto3
+        
+    - name: Download model
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+      run: |
+        python scripts/download_model.py
+        
+    - name: Test backend prediction
+      run: |
+        python backend/backend.py &
+        sleep 10  # Wait for the server to start
+        curl -X POST http://localhost:8000/predict \
+          -H "Content-Type: application/json" \
+          -d '{"year": 2015, "make": "Toyota", "model": "Camry", "trim": "LE", "body": "sedan", "transmission": "automatic", "vin": "4T1BF1FKXEU123456", "state": "CA", "condition": 4, "odometer": 50000, "color": "blue", "interior": "black", "seller": "test", "saledate": "Mon Mar 15 2021 12:00:00"}'
+
+    - name: Generate model report
+      run: |
+        python generate_report.py
+        
+    - name: Upload model report
+      uses: actions/upload-artifact@v3
+      with:
+        name: model-report
+        path: model_report.md
+
+  build-and-push:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install boto3
+        
+    - name: Download model
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_BUCKET_NAME: ${{ secrets.AWS_BUCKET_NAME }}
+      run: |
+        python scripts/download_model.py
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+    - name: Build and push backend
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./backend/Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/car-price-backend:latest
+        
+    - name: Build and push frontend
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: ./frontend/Dockerfile
+        push: true
+        tags: ${{ secrets.DOCKERHUB_USERNAME }}/car-price-frontend:latest 
