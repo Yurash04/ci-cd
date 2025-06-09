@@ -1,5 +1,8 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_extraction import FeatureHasher
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+import numpy as np
 
 class FeatureHasherTransformer(BaseEstimator, TransformerMixin):
     """
@@ -22,4 +25,25 @@ class FeatureHasherTransformer(BaseEstimator, TransformerMixin):
         # Apply feature hashing
         X_hashed = self.hasher.transform(X_dict)
         
-        return X_hashed 
+        return X_hashed
+
+class MinMaxScalerDF(BaseEstimator, TransformerMixin):
+    """
+    Custom transformer that applies MinMaxScaler while preserving DataFrame structure.
+    """
+    def __init__(self):
+        self.scaler = MinMaxScaler()
+        self.feature_names = None
+        
+    def fit(self, X, y=None):
+        # Store feature names
+        self.feature_names = X.columns
+        # Fit the scaler
+        self.scaler.fit(X)
+        return self
+        
+    def transform(self, X):
+        # Transform the data
+        X_scaled = self.scaler.transform(X)
+        # Convert back to DataFrame with original column names
+        return pd.DataFrame(X_scaled, columns=self.feature_names, index=X.index) 

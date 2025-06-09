@@ -10,8 +10,8 @@ import os
 # Add the project root directory to Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.feature_engineering import create_features  # Импортируем функцию из правильного модуля
-from backend.transformers import FeatureHasherTransformer  # Импортируем трансформер
+from backend.feature_engineering import create_features
+from backend.transformers import FeatureHasherTransformer, MinMaxScalerDF  # Импортируем оба трансформера
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
