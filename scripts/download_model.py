@@ -1,5 +1,5 @@
 import os
-import boto3
+import requests
 from pathlib import Path
 import logging
 
@@ -8,27 +8,28 @@ logger = logging.getLogger(__name__)
 
 def download_model():
     """
-    Download model from S3 bucket.
-    Requires AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.
+    Download model from URL specified in MODEL_URL environment variable.
     """
     try:
         # Create models directory if it doesn't exist
         model_dir = Path('./models/best')
         model_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize S3 client
-        s3 = boto3.client('s3',
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
-        )
+        # Get model URL from environment variable
+        model_url = os.getenv('MODEL_URL')
+        if not model_url:
+            raise ValueError("MODEL_URL environment variable is not set")
         
-        # Download model file
-        bucket_name = os.getenv('AWS_BUCKET_NAME', 'your-bucket-name')
-        model_key = 'models/full_model_pipeline.joblib'
         local_path = model_dir / 'full_model_pipeline.joblib'
         
-        logger.info(f"Downloading model from s3://{bucket_name}/{model_key}")
-        s3.download_file(bucket_name, model_key, str(local_path))
+        logger.info(f"Downloading model from {model_url}")
+        response = requests.get(model_url, stream=True)
+        response.raise_for_status()
+        
+        with open(local_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+                
         logger.info(f"Model downloaded successfully to {local_path}")
         
     except Exception as e:

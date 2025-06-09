@@ -2,23 +2,28 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
+    build: ./backend
     ports:
       - "8000:8000"
-    volumes:
-      - ./models:/app/models
     environment:
-      - PYTHONUNBUFFERED=1
+      - MODEL_URL=${MODEL_URL}  # URL to download model from Yandex Disk
+    volumes:
+      - ./backend:/app
+    networks:
+      - app-network
 
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
+    build: ./frontend
     ports:
-      - "8501:8501"
-    environment:
-      - BACKEND_URL=http://backend:8000
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     depends_on:
       - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
