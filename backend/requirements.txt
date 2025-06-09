@@ -1,9 +1,0 @@
-fastapi==0.104.1      # FastAPI фреймворк [[2]][[3]]
-uvicorn==0.23.2       # ASGI сервер для запуска FastAPI
-joblib==1.3.2         # Для загрузки ML-моделей
-pandas==2.0.3         # Обработка данных
-numpy==1.26.0         # Вычисления
-scikit-learn==1.3.2   # ML-алгоритмы и препроцессинг
-webcolors==1.13       # Конвертация названий цветов в RGB [[1]]
-python-multipart==0.0.6  # Обработка multipart/form-data (UploadFile) [[4]]
-pydantic==2.6.4       # Валидация данных [[3]][[7]]
