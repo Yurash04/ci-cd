@@ -12,6 +12,14 @@ logger = logging.getLogger(__name__)
 def get_google_drive_file_id(url):
     """Extract file ID from Google Drive URL."""
     logger.info(f"Checking if URL is Google Drive format: {url[:50]}...")
+    
+    # If URL starts with id=, extract the ID directly
+    if url.startswith('id='):
+        file_id = url[3:]  # Remove 'id=' prefix
+        logger.info(f"Found Google Drive file ID from partial URL: {file_id}")
+        return file_id
+    
+    # Check full URL patterns
     patterns = [
         r'https://drive\.google\.com/file/d/([^/]+)',
         r'https://drive\.google\.com/open\?id=([^&]+)',
@@ -23,7 +31,7 @@ def get_google_drive_file_id(url):
         match = re.search(pattern, url)
         if match:
             file_id = match.group(1)
-            logger.info(f"Found Google Drive file ID: {file_id}")
+            logger.info(f"Found Google Drive file ID from full URL: {file_id}")
             return file_id
     
     logger.info("URL is not in Google Drive format")
