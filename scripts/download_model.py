@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 def get_google_drive_file_id(url):
     """Extract file ID from Google Drive URL."""
+    logger.info(f"Checking if URL is Google Drive format: {url[:50]}...")
     patterns = [
         r'https://drive\.google\.com/file/d/([^/]+)',
         r'https://drive\.google\.com/open\?id=([^&]+)',
@@ -21,7 +22,11 @@ def get_google_drive_file_id(url):
     for pattern in patterns:
         match = re.search(pattern, url)
         if match:
-            return match.group(1)
+            file_id = match.group(1)
+            logger.info(f"Found Google Drive file ID: {file_id}")
+            return file_id
+    
+    logger.info("URL is not in Google Drive format")
     return None
 
 def download_from_google_drive(file_id, destination):
@@ -72,7 +77,7 @@ def download_model():
         if not model_url:
             raise ValueError("MODEL_URL environment variable is not set")
         
-        logger.info(f"Original URL: {model_url}")
+        logger.info(f"Original URL: {model_url[:50]}...")
         local_path = model_dir / 'full_model_pipeline.joblib'
         
         # Check if it's a Google Drive URL
@@ -82,9 +87,14 @@ def download_model():
             total_size = download_from_google_drive(file_id, local_path)
         else:
             # Direct download
-            logger.info(f"Using direct download URL: {model_url}")
+            logger.info(f"Using direct download URL: {model_url[:50]}...")
             response = requests.get(model_url, stream=True)
             response.raise_for_status()
+            
+            # Log response headers for debugging
+            logger.info("Response headers:")
+            for key, value in response.headers.items():
+                logger.info(f"  {key}: {value}")
             
             total_size = int(response.headers.get('content-length', 0))
             logger.info(f"Expected file size: {total_size} bytes")
