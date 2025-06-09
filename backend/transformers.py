@@ -43,7 +43,14 @@ class MinMaxScalerDF(BaseEstimator, TransformerMixin):
         return self
         
     def transform(self, X):
+        if not hasattr(self, 'feature_names'):
+            # If not fitted, fit on the current data
+            self.fit(X)
+            
         # Transform the data
         X_scaled = self.scaler.transform(X)
         # Convert back to DataFrame with original column names
-        return pd.DataFrame(X_scaled, columns=self.feature_names, index=X.index) 
+        return pd.DataFrame(X_scaled, columns=self.feature_names, index=X.index)
+        
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X) 
