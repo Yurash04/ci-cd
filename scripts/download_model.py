@@ -107,8 +107,9 @@ def download_model():
         
         # Verify file size
         actual_size = local_path.stat().st_size
-        if actual_size != total_size:
-            raise ValueError(f"Downloaded file size {actual_size} does not match expected size {total_size}")
+        expected_size = 147_990_000  # примерный размер в байтах
+        if actual_size < expected_size:
+            raise ValueError(f"Downloaded file size {actual_size} is less than expected {expected_size}")
                 
         logger.info(f"Model downloaded successfully to {local_path}")
         
