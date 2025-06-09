@@ -39,7 +39,7 @@ def get_google_drive_file_id(url):
     return None
 
 def download_from_google_drive(file_id, destination):
-    """Download file from Google Drive."""
+    """Download a file from Google Drive."""
     def get_confirm_token(response):
         for key, value in response.cookies.items():
             if key.startswith('download_warning_'):
@@ -50,26 +50,51 @@ def download_from_google_drive(file_id, destination):
         CHUNK_SIZE = 32768
         total_size = 0
         
-        with open(destination, "wb") as f:
+        with open(destination, 'wb') as f:
             for chunk in response.iter_content(CHUNK_SIZE):
                 if chunk:
                     f.write(chunk)
                     total_size += len(chunk)
-                    if total_size % (10 * 1024 * 1024) < CHUNK_SIZE:  # Log every 10MB
+                    if total_size % (10 * 1024 * 1024) < CHUNK_SIZE:
                         logger.info(f"Downloaded {total_size} bytes")
+        
         return total_size
 
-    url = "https://docs.google.com/uc?export=download"
-    session = requests.Session()
-    
-    response = session.get(url, params={'id': file_id}, stream=True)
-    token = get_confirm_token(response)
-    
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(url, params=params, stream=True)
-    
-    return save_response_content(response, destination)
+    try:
+        # First request to get the confirmation token
+        url = f"https://docs.google.com/uc?export=download&id={file_id}"
+        logger.info(f"Making initial request to: {url}")
+        
+        session = requests.Session()
+        response = session.get(url, stream=True)
+        response.raise_for_status()
+        
+        # Log response headers for debugging
+        logger.info("Initial response headers:")
+        for key, value in response.headers.items():
+            logger.info(f"  {key}: {value}")
+        
+        # Check if we need confirmation
+        token = get_confirm_token(response)
+        if token:
+            logger.info("Download requires confirmation, proceeding with token")
+            params = {'id': file_id, 'export': 'download', 'confirm': token}
+            response = session.get(url, params=params, stream=True)
+            response.raise_for_status()
+            
+            # Log confirmation response headers
+            logger.info("Confirmation response headers:")
+            for key, value in response.headers.items():
+                logger.info(f"  {key}: {value}")
+        
+        # Save the file
+        total_size = save_response_content(response, destination)
+        logger.info(f"Download completed, total size: {total_size} bytes")
+        return total_size
+        
+    except Exception as e:
+        logger.error(f"Error downloading from Google Drive: {str(e)}")
+        raise
 
 def download_model():
     """
