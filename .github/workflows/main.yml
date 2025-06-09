@@ -51,6 +51,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+        registry: docker.io
         
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -60,6 +61,8 @@ jobs:
         tags: ${{ secrets.DOCKERHUB_USERNAME }}/car-price-backend:latest
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
         
     - name: Start backend server
       run: |
