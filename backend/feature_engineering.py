@@ -7,13 +7,16 @@ def create_features(data):
     Create features from raw car data.
     
     Args:
-        data (dict): Dictionary containing car data
+        data (dict or pd.DataFrame): Dictionary containing car data or DataFrame
         
     Returns:
         pd.DataFrame: DataFrame with created features
     """
-    # Convert single sample to DataFrame
-    df = pd.DataFrame([data])
+    # Convert to DataFrame if input is dict
+    if isinstance(data, dict):
+        df = pd.DataFrame([data])
+    else:
+        df = data.copy()
     
     # Convert saledate to datetime
     df['saledate'] = pd.to_datetime(df['saledate'])

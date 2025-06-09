@@ -11,8 +11,9 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.feature_engineering import create_features
-from backend.transformers import FeatureHasherTransformer, MinMaxScalerDF  # Импортируем оба трансформера
+from backend.transformers import FeatureHasherTransformer, MinMaxScalerDF
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
