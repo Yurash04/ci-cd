@@ -62,11 +62,11 @@ def download_from_google_drive(file_id, destination):
 
     try:
         # First request to get the confirmation token
-        url = f"https://docs.google.com/uc?export=download&id={file_id}"
+        url = "https://docs.google.com/uc"
         logger.info(f"Making initial request to: {url}")
         
         session = requests.Session()
-        response = session.get(url, stream=True)
+        response = session.get(url, params={'id': file_id, 'export': 'download'}, stream=True)
         response.raise_for_status()
         
         # Log response headers for debugging
