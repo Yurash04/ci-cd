@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.feature_engineering import create_features  # Импортируем функцию из правильного модуля
+from backend.transformers import FeatureHasherTransformer  # Импортируем трансформер
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
